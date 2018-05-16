@@ -1,10 +1,11 @@
 import io
 import gzip
+from math import ceil
 import os
 import tempfile
 
 from deepsense import neptune
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from PIL import Image
@@ -79,6 +80,8 @@ def train(model, optimizer, criterion, batch_generator_train, batch_generator_ev
     if torch.cuda.is_available():
         model.cuda()
 
+    TOTAL_BATCH_NR = ceil(len(batch_generator_train)/BATCH_SIZE)
+
     for epoch_id in range(EPOCH_NR):
         for batch_id, batch_data in enumerate(batch_generator_train):
             X_batch, y_batch = Variable(batch_data[0]), Variable(batch_data[1])
@@ -93,26 +96,25 @@ def train(model, optimizer, criterion, batch_generator_train, batch_generator_ev
             optimizer.step()
 
             loss_value = loss_batch.data.cpu().numpy()[0]
-            batch_nr = epoch_id * len(batch_generator_train) + batch_id
+            batch_nr = epoch_id * (TOTAL_BATCH_NR - 1) + batch_id
             batch_msg = 'Batch {} log-loss {}'.format(batch_nr, loss_value)
             print(batch_msg)
 
-            ctx.channel_send('Batch log-loss', batch_nr, loss_value)
+            ctx.channel_send('Batch log-loss', x=batch_nr, y=loss_value)
 
-            if batch_id == 10:  # len(batch_generator_train):
+            if batch_id == TOTAL_BATCH_NR:
                 break
 
-        log_loss, accuracy, histograms = score_model(model, batch_generator_eval)
+        log_loss, accuracy = score_model(model, batch_generator_eval)
 
-        print(histograms)
 
         epoch_msg_log_loss = 'Epoch {} validation log-loss {}'.format(epoch_id, log_loss)
         epoch_msg_accuracy = 'Epoch {} validation accuracy {}'.format(epoch_id, accuracy)
         print(epoch_msg_log_loss)
         print(epoch_msg_accuracy)
 
-        ctx.channel_send('Epoch validation log-loss', epoch_id, log_loss)
-        ctx.channel_send('Epoch validation accuracy', epoch_id, accuracy)
+        ctx.channel_send('Epoch validation log-loss', x=epoch_id, y=log_loss)
+        ctx.channel_send('Epoch validation accuracy', x=epoch_id, y=accuracy)
 
 
 def score_model(model, batch_generator):
@@ -121,6 +123,8 @@ def score_model(model, batch_generator):
 
     model.eval()
 
+    TOTAL_BATCH_NR = ceil(len(batch_generator)/BATCH_SIZE)
+    
     y_pred, y_true = [], []
     for batch_id, batch_data in enumerate(batch_generator):
         X_batch = Variable(batch_data[0], volatile=True)
@@ -128,10 +132,10 @@ def score_model(model, batch_generator):
             X_batch = X_batch.cuda()
 
         y_batch_pred = model(X_batch)
-        y_pred.append(y_batch_pred.data.cpu().numpy())
+        y_pred.append(np.exp(y_batch_pred.data.cpu().numpy()))
         y_true.append(batch_data[1].numpy())
 
-        if batch_id == 10:  # len(batch_generator):
+        if batch_id == TOTAL_BATCH_NR:
             break
 
     model.train()
@@ -140,8 +144,8 @@ def score_model(model, batch_generator):
     y_pred = np.vstack(y_pred)
 
     log_loss, accuracy = get_scores(y_true, y_pred)
-    prediction_histogram = get_histograms(y_true, y_pred)
-    return log_loss, accuracy, prediction_histogram
+    #prediction_histogram = get_histograms(y_true, y_pred)
+    return log_loss, accuracy
 
 
 def get_scores(y_true, y_pred):
