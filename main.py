@@ -1,11 +1,8 @@
-import io
-import gzip
 from math import ceil
-import os
 import tempfile
 
 from deepsense import neptune
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from PIL import Image
@@ -80,7 +77,7 @@ def train(model, optimizer, criterion, batch_generator_train, batch_generator_ev
     if torch.cuda.is_available():
         model.cuda()
 
-    TOTAL_BATCH_NR = ceil(len(batch_generator_train)/BATCH_SIZE)
+    TOTAL_BATCH_NR = ceil(len(batch_generator_train) / BATCH_SIZE)
 
     for epoch_id in range(EPOCH_NR):
         for batch_id, batch_data in enumerate(batch_generator_train):
@@ -129,8 +126,8 @@ def score_model(model, batch_generator):
 
     model.eval()
 
-    TOTAL_BATCH_NR = ceil(len(batch_generator)/BATCH_SIZE)
-    
+    TOTAL_BATCH_NR = ceil(len(batch_generator) / BATCH_SIZE)
+
     y_pred, y_true = [], []
     for batch_id, batch_data in enumerate(batch_generator):
         X_batch = Variable(batch_data[0], volatile=True)
@@ -150,8 +147,8 @@ def score_model(model, batch_generator):
     y_pred = np.vstack(y_pred)
 
     log_loss, accuracy = get_scores(y_true, y_pred)
-    #prediction_histogram = get_histograms(y_true, y_pred)
-    return log_loss, accuracy
+    prediction_histogram = get_histograms(y_true, y_pred)
+    return log_loss, accuracy, prediction_histogram
 
 
 def get_scores(y_true, y_pred):
@@ -171,7 +168,7 @@ def get_histograms(y_true, y_pred):
 
     with tempfile.NamedTemporaryFile() as filepath:
         plt.savefig(filepath)
-        image_pil = Image.read(filepath, 'r')
+        image_pil = Image.load(filepath, 'r')
     return image_pil
 
 
