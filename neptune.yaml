@@ -1,5 +1,3 @@
-project: NFS
-
 parameters:
   epoch_nr: 50
   batch_size: 32
