@@ -102,3 +102,17 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# project files
+cache
+cache/
+output 
+output/ 
+neptune.log 
+offline_job.log
+
+#pycharm
+.cache
+.chache/
+.idea/
+.idea_modules/

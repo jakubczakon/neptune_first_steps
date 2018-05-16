@@ -1,0 +1,16 @@
+project: NFS
+
+parameters:
+  epoch_nr: 10
+  batch_size: 32
+  learning_rate: 0.001
+  dense_units: 100
+
+exclude:
+  - output
+  - cache
+  - neptune.log
+  - offline_job.log
+  - .git
+  - .idea
+  - .ipynb_checkpoints
