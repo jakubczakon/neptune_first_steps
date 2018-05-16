@@ -1,7 +1,7 @@
 project: NFS
 
 parameters:
-  epoch_nr: 10
+  epoch_nr: 50
   batch_size: 32
   learning_rate: 0.001
   dense_units: 100

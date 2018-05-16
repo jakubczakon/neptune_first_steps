@@ -96,7 +96,7 @@ def train(model, optimizer, criterion, batch_generator_train, batch_generator_ev
             optimizer.step()
 
             loss_value = loss_batch.data.cpu().numpy()[0]
-            batch_nr = epoch_id * (TOTAL_BATCH_NR - 1) + batch_id
+            batch_nr = epoch_id * (TOTAL_BATCH_NR) + batch_id
             batch_msg = 'Batch {} log-loss {}'.format(batch_nr, loss_value)
             print(batch_msg)
 
@@ -105,16 +105,22 @@ def train(model, optimizer, criterion, batch_generator_train, batch_generator_ev
             if batch_id == TOTAL_BATCH_NR:
                 break
 
-        log_loss, accuracy = score_model(model, batch_generator_eval)
+        log_loss_train, accuracy_train = score_model(model, batch_generator_train)
+        log_loss_eval, accuracy_eval = score_model(model, batch_generator_eval)
 
+        msg_epoch_train_log_loss = 'Epoch {} train log-loss {}'.format(epoch_id, log_loss_train)
+        msg_epoch_eval_log_loss = 'Epoch {} eval log-loss {}'.format(epoch_id, log_loss_eval)
+        mst_epoch_train_accuracy = 'Epoch {} train accuracy {}'.format(epoch_id, accuracy_train)
+        mst_epoch_eval_accuracy = 'Epoch {} eval accuracy {}'.format(epoch_id, accuracy_eval)
+        print(msg_epoch_train_log_loss)
+        print(msg_epoch_eval_log_loss)
+        print(mst_epoch_train_accuracy)
+        print(mst_epoch_eval_accuracy)
 
-        epoch_msg_log_loss = 'Epoch {} validation log-loss {}'.format(epoch_id, log_loss)
-        epoch_msg_accuracy = 'Epoch {} validation accuracy {}'.format(epoch_id, accuracy)
-        print(epoch_msg_log_loss)
-        print(epoch_msg_accuracy)
-
-        ctx.channel_send('Epoch validation log-loss', x=epoch_id, y=log_loss)
-        ctx.channel_send('Epoch validation accuracy', x=epoch_id, y=accuracy)
+        ctx.channel_send('Epoch train log-loss', x=epoch_id, y=log_loss_train)
+        ctx.channel_send('Epoch eval log-loss', x=epoch_id, y=log_loss_eval)
+        ctx.channel_send('Epoch train accuracy', x=epoch_id, y=accuracy_train)
+        ctx.channel_send('Epoch eval accuracy', x=epoch_id, y=accuracy_eval)
 
 
 def score_model(model, batch_generator):
